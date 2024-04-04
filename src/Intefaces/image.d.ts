@@ -1,4 +1,4 @@
-export interface IImageDetails{
-    previewUrl: string;
-    imageUrl: string;
+export interface IImageDetails {
+  previewUrl: string;
+  imageUrl: string;
 }

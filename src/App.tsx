@@ -1,26 +1,24 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import MainScreen from './Pages/MainScreen'
-// import { NavigationContainer } from '@react-navigation/native';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {StyleSheet, Text, View} from 'react-native';
+import React from 'react';
+import MainScreen from './Pages/MainScreen';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import StartScreen from './Pages/StartScreen';
+import {JSX} from 'react/jsx-runtime';
+import DetailScreen from './Pages/DetailScreen';
 
-// const AppNavigator = createNativeStackNavigator();
-
-
-
-
-const App = ():JSX.Element => {
+const Stack = createNativeStackNavigator();
+export default function App() {
   return (
-    
-      <>
-      <MainScreen/>
-      </>
-      
-    
-  )
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}>
+        <Stack.Screen name="Splash" component={StartScreen} />
+        <Stack.Screen name="Home" component={MainScreen} />
+        <Stack.Screen name="Details" component={DetailScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
-
-export default App
-
-const styles = StyleSheet.create({})

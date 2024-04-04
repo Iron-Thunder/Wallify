@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import React, {PropsWithChildren, useEffect, useState} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faBars} from '@fortawesome/free-solid-svg-icons';
+import {faBars, faSearch} from '@fortawesome/free-solid-svg-icons';
 import Nature from '../../assets/nature.jpg';
 import {IImageDetails} from '../Intefaces/image';
 import {categories} from '../../assets/categories';
@@ -23,7 +23,7 @@ const {width} = Dimensions.get('window');
 const columnCount = 3;
 const imageWidth = width / columnCount;
 
-const MainScreen = () => {
+const MainScreen = ({navigation}:any) => {
   const [imageData, setImageData] = useState<IImageDetails[]>([]);
   const [tempSearchQuery, setTempSearchQuery] = useState<string>('');
 
@@ -55,7 +55,7 @@ const MainScreen = () => {
   };
   useEffect(() => {
     // console.log(searchQuery);
-    // getImages();
+    getImages();
   }, [category]);
 
   return (
@@ -63,7 +63,7 @@ const MainScreen = () => {
       <View style={styles.topContainer}>
         <Text style={styles.headingText}>WallPaper</Text>
         <Pressable>
-          <FontAwesomeIcon icon={faBars} size={30} color="white" />
+          <FontAwesomeIcon icon={faSearch} size={20} color="white" />
         </Pressable>
       </View>
       <View
@@ -129,7 +129,11 @@ const MainScreen = () => {
           data={imageData}
           style={styles.flatlist}
           renderItem={image => (
-            <Image style={styles.photo} source={{uri: image.item.imageUrl}} />
+            <Pressable onPress={() => {
+              navigation.navigate('Details', {
+                imageUrl: image.item.imageUrl,
+              })
+            }}><Image style={styles.photo} source={{uri: image.item.imageUrl}} /></Pressable>
           )}
           numColumns={2}
         />
@@ -142,11 +146,6 @@ const MainScreen = () => {
           <Text style={{color: 'white'}}>Loading...</Text>
         </View>
       )}
-
-      <View style={styles.saveDownload}>
-          <Pressable><Text style={styles.download}>Download</Text></Pressable>
-          <Pressable><Text style={styles.wallPaper}>Set as WallPaper</Text></Pressable>
-      </View>
     </View>
   );
 };
