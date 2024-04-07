@@ -8,6 +8,7 @@ const StartScreen = ({navigation}: any) => {
   useEffect(() => {
     setTimeout(() => {
       navigation.navigate('Home');
+      // finish();
     }, 1000);
   }, []);
   return (

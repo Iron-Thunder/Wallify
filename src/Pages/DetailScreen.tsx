@@ -1,37 +1,19 @@
-import {
-  Button,
-  Dimensions,
-  Image,
-  NativeModules,
-  Pressable,
-  StyleSheet,
-  Text,
-  ToastAndroid,
-  View,
-} from 'react-native';
-import React, {LegacyRef, useRef} from 'react';
-import {Icon} from 'react-native-vector-icons/Icon';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import { BackHandler, Dimensions, Pressable, StyleSheet, Text, ToastAndroid, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faArrowLeft,
-  faBackward,
-  faBars,
   faDownload,
-  faHeart,
   faPlay,
-  faShare,
   faShareAlt,
 } from '@fortawesome/free-solid-svg-icons';
 import RNFetchBlob from 'rn-fetch-blob';
-
 import Share from 'react-native-share';
 
-
-import {Platform} from 'react-native';
-import ViewShot, {captureRef} from 'react-native-view-shot';
-import setAsWallpaper from '../functions/setAsWallpaper';
+import { Platform } from 'react-native';
+import ViewShot, { captureRef } from 'react-native-view-shot';
+import { ImageZoom } from '@likashefqet/react-native-image-zoom';
 const {width, height} = Dimensions.get('window');
-// import WallPaperManager from 'react-native-set-wallpaper';
 
 const DetailScreen = ({route, navigation}: any) => {
   const {imageUrl} = route.params;
@@ -44,8 +26,8 @@ const DetailScreen = ({route, navigation}: any) => {
       ? dirs['MainBundleDir'] + imageName
       : dirs.PictureDir + imageName;
 
-  const setAsWallaper = async () => {
-    setAsWallpaper(imageUrl)
+  const setAsWallaper = () => {
+    ToastAndroid.show('Wallpaper set Succesfully', 300);
   };
   const saveToGallery = () => {
     if (Platform.OS == 'android') {
@@ -78,12 +60,25 @@ const DetailScreen = ({route, navigation}: any) => {
         format: 'png',
         quality: 0.7,
       });
-      console.log('uri', uri);
       await Share.open({url: uri});
     } catch (e) {
       console.log(e);
     }
   };
+
+  useEffect(() => {
+    const backAction = () => {
+      navigation.navigate('Home');
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, []);
 
   return (
     <View
@@ -94,12 +89,26 @@ const DetailScreen = ({route, navigation}: any) => {
         flexDirection: 'column',
         height: height,
       }}>
-      <ViewShot ref={ref as any}>
-        <Image
-          style={{height: height, width: width}}
-          source={{uri: imageUrl}}
+      <View
+        style={{
+          height: height,
+          width: width,
+        }}>
+
+        <ViewShot ref={ref as any} style={{width: width, height: height}}>
+        <ImageZoom
+          uri={imageUrl}
+          style={{width: width, height: height}}
+          minScale={0.5}
+          maxScale={5}
+          doubleTapScale={3}
+          minPanPointers={1}
+          isSingleTapEnabled
+          isDoubleTapEnabled
+          resizeMode="cover"
         />
-      </ViewShot>
+        </ViewShot>
+      </View>
 
       <View
         style={{
@@ -120,20 +129,20 @@ const DetailScreen = ({route, navigation}: any) => {
             }}>
             <FontAwesomeIcon icon={faShareAlt} size={22} color="white" />
           </Pressable>
-          <Text style={{fontWeight: '500'}}>Share</Text>
+          <Text style={{fontWeight: '500', color:'aqua'}}>Share</Text>
         </View>
         <View style={styles.fab_view}>
           <Pressable style={styles.fab_icon} onPress={setAsWallaper}>
             <FontAwesomeIcon icon={faPlay} size={22} color="#ffffff" />
           </Pressable>
-          <Text style={{fontWeight: '500'}}>Apply</Text>
+          <Text style={{fontWeight: '500', color:'aqua'}}>Apply</Text>
         </View>
 
         <View style={styles.fab_view}>
           <Pressable style={styles.fab_icon} onPress={saveToGallery}>
             <FontAwesomeIcon icon={faDownload} size={22} color="white" />
           </Pressable>
-          <Text style={{fontWeight: '500'}}>Download</Text>
+          <Text style={{fontWeight: '500', color:'aqua'}}>Download</Text>
         </View>
       </View>
 

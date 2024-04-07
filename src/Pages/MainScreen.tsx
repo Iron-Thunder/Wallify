@@ -1,40 +1,59 @@
 import {
-  Button,
+  Alert,
+  BackHandler,
   Dimensions,
   FlatList,
   Image,
-  ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  Touchable,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import React, {PropsWithChildren, useEffect, useState} from 'react';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faBars, faSearch} from '@fortawesome/free-solid-svg-icons';
-import Nature from '../../assets/nature.jpg';
-import {IImageDetails} from '../Intefaces/image';
-import {categories} from '../../assets/categories';
+import { Shadow } from 'react-native-shadow-2';
+import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faSearch, faX } from '@fortawesome/free-solid-svg-icons';
+import { IImageDetails } from '../Intefaces/image';
+import { categories } from '../../assets/categories';
+import { RefreshControl } from 'react-native-gesture-handler';
 const {width} = Dimensions.get('window');
 const columnCount = 3;
 const imageWidth = width / columnCount;
 
-const MainScreen = ({navigation}:any) => {
+type IDisplayImage = {
+  navigation: any;
+};
+
+const MainScreen = ({navigation}: IDisplayImage) => {
   const [imageData, setImageData] = useState<IImageDetails[]>([]);
   const [tempSearchQuery, setTempSearchQuery] = useState<string>('');
 
   const [category, setCategory] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<number>(0);
+  const [pageNo, setPageNo] = useState<number>(1);
 
-  const getImages = async () => {
-    setImageData([]);
+  const [searchBar, setSearchBar] = useState<Boolean>(false);
+
+  useEffect(() => {
+    const backAction = () => {
+      navigation.goBack(null);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const getImages = async (newCat: boolean) => {
     const apiKey = '42964411-a8eb295fb7f217fd70952cc3c';
-    const pixaUrl = `https://pixabay.com/api/?key=${apiKey}&q=${category}&image_type=photo&orientation=vertical`;
+    const pixaUrl = `https://pixabay.com/api/?key=${apiKey}&q=${category}&page=${pageNo}&image_type=photo&orientation=vertical`;
     try {
       const response = await fetch(pixaUrl);
       if (!response.ok) {
@@ -48,94 +67,144 @@ const MainScreen = ({navigation}:any) => {
           imageUrl: hit.largeImageURL,
         });
       });
-      setImageData(newImageData);
+      if (newCat === true) setImageData(newImageData);
+      else setImageData([...imageData, ...newImageData]);
     } catch (error) {
       console.error('Error:', error);
     }
   };
   useEffect(() => {
     // console.log(searchQuery);
-    getImages();
+    getImages(true);
   }, [category]);
 
+  const handleLoadNext = () => {
+    setPageNo(pageNo + 1);
+    getImages(false);
+  };
+
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert('Hold on!', 'Are you sure you want to go back?', [
+        {
+          text: 'Cancel',
+          onPress: () => null,
+          style: 'cancel',
+        },
+        {text: 'YES', onPress: () => BackHandler.exitApp()},
+      ]);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  function refreshPage() {
+    Dimensions.get('window')
+  }
   return (
     <View style={styles.mainContainer}>
       <View style={styles.topContainer}>
-        <Text style={styles.headingText}>WallPaper</Text>
-        <Pressable>
-          <FontAwesomeIcon icon={faSearch} size={20} color="white" />
+        <Text style={styles.headingText}>Wallify</Text>
+        <Pressable onPress={() => setSearchBar(!searchBar)}>
+          <FontAwesomeIcon
+            icon={searchBar ? faX : faSearch}
+            size={20}
+            color="white"
+          />
         </Pressable>
       </View>
-      <View
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 4,
-        }}>
-        <TextInput
-          style={styles.textInput}
-          onChangeText={text => setTempSearchQuery(text)}
-          value={tempSearchQuery}
-          onSubmitEditing={() => {
-            setCategory(tempSearchQuery);
-            setActiveTab(-1);
-          }}
-          placeholder="search wallappers"
-          placeholderTextColor={'#ffffff80'}></TextInput>
-      </View>
+      {searchBar ? (
+        <View
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            elevation: 4,
+          }}>
+          <TextInput
+            style={styles.textInput}
+            onChangeText={text => setTempSearchQuery(text)}
+            value={tempSearchQuery}
+            onSubmitEditing={() => {
+              setCategory(tempSearchQuery);
+              setActiveTab(-1);
+            }}
+            placeholder="Search Wallappers"
+            placeholderTextColor={'white'}></TextInput>
+        </View>
+      ) : null}
 
       <View style={styles.middleContainer}>
         <ScrollView horizontal={true}>
           {categories.map((category, index) => {
             return (
-              <Pressable
-                key={index}
-                style={[
-                  styles.scrollTypes,
-                  activeTab === index && {
-                    backgroundColor: 'pink',
-                    shadowColor: 'pink',
-                    shadowRadius: 10,
-                  },
-                ]}
-                onPress={() => {
-                  setCategory(category.category);
-                  setActiveTab(index);
-                  setTempSearchQuery('')
-                }}>
-                <Image
-                  style={styles.scrollImg}
-                  source={category.imgUrl}
-                  resizeMode="cover"
-                />
-                <Text
+              <View
+                style={{marginHorizontal: 10, alignItems: 'center'}}
+                key={index}>
+                <Shadow>
+                  <Image
+                    style={styles.scrollImg}
+                    source={category.imgUrl}
+                    resizeMode="cover"
+                  />
+                </Shadow>
+                <Pressable
+                  key={index}
                   style={[
-                    styles.scrollText,
+                    styles.scrollTypes,
                     activeTab === index && {
-                      color: 'black',
+                      shadowColor: 'purple',
+                      shadowRadius: 10,
                     },
-                  ]}>
-                  {category.name}
-                </Text>
-              </Pressable>
+                  ]}
+                  onPress={() => {
+                    setCategory(category.category);
+                    setActiveTab(index);
+                    setTempSearchQuery('');
+                    setPageNo(1);
+                    
+                    
+                  }}>
+                 
+                  <Text
+                    style={[
+                      styles.scrollText,
+                      activeTab === index && {
+                        color: 'yellow',
+                      },
+                    ]}>
+                    {category.name}
+                  </Text>
+                </Pressable>
+              </View>
             );
           })}
         </ScrollView>
       </View>
-      {imageData?.length ? (
+      {imageData?.length > 0 ? (
         <FlatList
           data={imageData}
           style={styles.flatlist}
+          onScrollEndDrag={handleLoadNext}
           renderItem={image => (
-            <Pressable onPress={() => {
-              navigation.navigate('Details', {
-                imageUrl: image.item.imageUrl,
-              })
-            }}><Image style={styles.photo} source={{uri: image.item.imageUrl}} /></Pressable>
+            <Pressable
+              onPress={() => {
+                navigation.navigate('Details', {
+                  imageUrl: image.item.imageUrl,
+                });
+              }}>
+              <Image style={styles.photo} source={{uri: image.item.imageUrl}} />
+            </Pressable>
           )}
           numColumns={2}
+          ListFooterComponent={<Text>Loading...</Text>} // Loader when loading next page.
         />
       ) : (
         <View
@@ -155,55 +224,55 @@ export default MainScreen;
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: 'black',
-    // position: 'relative',
+    backgroundColor: '#E6E6FA',
   },
 
   topContainer: {
-    marginTop: 26,
-    marginHorizontal: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // backgroundColor: 'white',
+    backgroundColor: 'purple',
   },
 
   headingText: {
     fontSize: 24,
     color: 'white',
+    fontWeight: 'bold',
+    fontFamily: 'Lugrasimo Regular',
   },
   middleContainer: {
-    marginTop: 20,
-    margin: 10,
+    marginTop: 12,
+    // margin: 10,
     // backgroundColor: 'red',
   },
 
   scrollTypes: {
     display: 'flex',
     flexDirection: 'row',
-    backgroundColor: '#484900',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     marginHorizontal: 6,
     borderRadius: 30,
-    paddingRight: 18,
-    minWidth: 120,
-    height: 43,
+    position: 'absolute',
+    minWidth: 140,
+    // height: 43,
+    height: 80,
+    width: 140,
   },
 
   scrollImg: {
-    borderRadius: 60,
-    height: 30,
-    width: 30,
-    marginLeft: 10,
+    borderRadius: 10,
+    height: 80,
+    width: 140,
   },
 
   scrollText: {
-    marginLeft: 8,
     color: 'white',
-    fontSize: 16,
-    paddingLeft: 2,
+    fontSize: 23,
+    fontWeight: '600',
   },
 
   bottomContainer: {
@@ -213,15 +282,10 @@ const styles = StyleSheet.create({
   },
 
   photo: {
-    height: 250,
+    height: 230,
     borderRadius: 10,
     width: width * 0.5 - 16,
     margin: 4,
-  },
-  btn: {
-    height: 20,
-    width: 50,
-    backgroundColor: 'blue',
   },
   text: {
     color: 'white',
@@ -230,7 +294,7 @@ const styles = StyleSheet.create({
     margin: 8,
   },
   textInput: {
-    backgroundColor: '#F6F3EC30',
+    backgroundColor: '#707070',
     color: 'white',
     fontSize: 18,
     borderRadius: 10,
@@ -238,40 +302,4 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 20,
   },
-
-  saveDownload : {
-    marginHorizontal: 16,
-    display: 'flex',
-    flexDirection: 'row',
-    position: 'absolute',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    bottom: 0.1,
-    
-
-  },
-
-  download : {
-    color: 'white',
-    position: 'relative',
-    left: 10,
-    paddingHorizontal: 20,
-    backgroundColor: 'green',
-    paddingVertical: 16,
-    borderRadius: 10,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  wallPaper : {
-    color: 'white',
-    position: 'relative',
-    left: 100,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: 'green',
-    borderRadius: 10,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-
 });
